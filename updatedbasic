@@ -20,6 +20,16 @@ Table users_main_data {
   fax varchar
 }
 
+Table admins {
+  user_id int [pk, ref: < users.user_id]
+  level varchar 
+  firstName varchar [not null]
+  lastName varchar [not null]
+  gender int [ref: < genderType.type_id]
+  phone varchar [not null]
+  email varchar [not null]
+}
+
 Table basic_users {
   firstName varchar [not null]
   lastName varchar [not null]

@@ -1,21 +1,75 @@
-//// -- LEVEL 1
-//// -- Tables and References
 
 Table users {
   user_id int [pk, increment]
   userName varchar
-  firstName varchar [not null]
-  lastName varchar [not null]
+  date_joined timestamp
+  verified boolean
+  status int [not null, ref: < userStatusType.type_id]
+}
+
+Table users_main_data {
+  user_id int [pk, ref: < users.user_id]
   address varchar
+  address_2 varchar
   city int [ref: < city.city_id]
   province int [ref: < provinces.province_id]
   phone varchar [not null]
   phone_2 varchar
-  date_joined timestamp
-  status int [not null, ref: < userStatusType.type_id]
+  email varchar [not null]
+  email_2 varchar
+  fax varchar
 }
 
+Table basic_users {
+  firstName varchar [not null]
+  lastName varchar [not null]
+  gender int [ref: < genderType.type_id]
+}
+
+Table agents_users {
+  user_id int [pk, ref: - users.user_id]
+  firstName varchar [not null]
+  lastName varchar [not null]
+  gender int [ref: < genderType.type_id]
+  license_id varchar [not null]
+  nar_id varchar [not null]
+  commission decimal 
+  website varchar
+  linkedin varchar
+}
+
+Table company_users {
+  user_id int [pk, ref: - users.user_id]
+  companyName varchar [not null]
+  company_legal_registry_id varchar // EMDB
+  license_id varchar [not null]
+  nar_id varchar [not null]
+  commission decimal 
+  website varchar
+  linkedin varchar
+}
+
+Table business_hours {
+  user_id int [pk, ref: - users.user_id]
+  day int
+  open_time datetime
+  close_time datetime
+}
+
+
+
+
+
+
+// TYPES
+
+
 Table userStatusType {
+  type_id int [pk]
+  type_name varchar [not null]
+}
+
+Table genderType {
   type_id int [pk]
   type_name varchar [not null]
 }
@@ -31,10 +85,6 @@ Table city {
   province_id int [ref: < provinces.province_id]
 }
 
-Table adType {
-  type_id int [pk]
-  type_name varchar [not null]
-}
 
 Table zoningType {
   zoning_code int [pk]
@@ -50,6 +100,12 @@ Table estateTypes {
   type_id int [pk]
   type_name varchar [not null]
 }
+
+Table estateSubTypes {
+  type_id int [pk]
+  type_name varchar [not null]
+}
+
 
 Table estateStyleTypes {
   type_id int [pk]
@@ -113,29 +169,39 @@ Table buildingShapes {
 
 
 
+// BID TABLES
 
-
-Table bids {
+Table bids_sell {
   mls_id varchar [pk]
-  bid_id int [pk, increment]
+  bid_id int [increment]
+  estate int [ref: - advertisement_sell.ad_id]
+  user int [ref: - users.user_id]
+  bid_amount decimal
+}
+
+Table bids_rent {
+  mls_id varchar [pk]
+  bid_id int [increment]
   estate int [ref: - advertisement_sell.ad_id]
   user int [ref: - users.user_id]
   bid_amount decimal
 }
 
 
+
+
+// ESTATE TABLES
+
 Table estate {
   mls_id varchar [pk]
+  estate_user int [ref: < users.user_id]
   estate_id varchar
   estate_title varchar
-  esate_owner varchar
-  estate_user int [ref: < users.user_id]
-  building_type int [ref: < buildingType.type_id]
-  estate_type int [ref: < estateTypes.type_id]
+  estate_description varchar
 }
 
 Table estate_location {
-  mls_id varchar [pk, ref: < estate.mls_id]
+  mls_id varchar [pk, ref: - estate.mls_id]
   estate_id int [ref: < estate.estate_id]
   province int [ref: < provinces.province_id]
   city int [ref: < city.city_id]
@@ -148,53 +214,99 @@ Table estate_location {
 }
 
 Table estate_main_data {
-  mls_id varchar [pk, ref: < estate.mls_id]
+  mls_id varchar [pk, ref: - estate.mls_id]
+  estate_type int [ref: < estateTypes.type_id]
+  estate_subtype int [ref: < estateSubTypes.type_id]
   estate_style int [ref: < estateStyleTypes.type_id]
-  estate_description varchar
+  building_type int [ref: < buildingType.type_id]
+  building_style int [ref: < buildingType.type_id]
   estate_size int
   estate_lot_size int
   number_of_bedrooms int
   number_of_bathrooms int
   number_of_balconies int
-  balconies_space int
   kitchen_size varchar
+
   orientation int [ref: < orientationType.type_id]
   view int [ref: < viewType.type_id]
 }
 
 Table estate_secondary_data {
-  mls_id varchar [pk, ref: < estate.mls_id]
+  mls_id varchar [pk, ref: - estate.mls_id]
   building_shape int [ref: < buildingShapes.type_id]
   elevator int
   heating int [ref: < heatingType.type_id]
   cooling int [ref: < coolingType.type_id]
-  estete_sewer int [ref: < sewerType.type_id]
-  parking int [ref: < parkingType.type_id]
+  estate_sewer int [ref: < sewerType.type_id]
+  parking_available boolean
   pets_allowed boolean
   maintenance_fees decimal
   estate_taxes decimal
 }
 
+Table estate_tertiary_data {
+  mls_id varchar [pk, ref: - estate.mls_id]
+  parking int [ref: < parkingType.type_id]
+  balconies_space int
+}
+
+Table user__photo {
+  photo_id int [pk, increment]
+  user_id int
+  link varchar
+  // how to keep the data ?
+}
+
+
+Table estate_listing_photo {
+  photo_id int [pk, increment]
+  photo_name varchar
+  mls_id varchar [ref: < estate.mls_id]
+  // how to keep the data ?
+}
+
+
 Table estate_features {
-  mls_id varchar [pk, ref: < estate.mls_id]
-  appliances int [ref: < applianceType.type_id]
-  features_building int [ref: < buildingFeatures.type_id]
+  mls_id varchar [pk, ref: > estate.mls_id]
   features_estate int [ref: < estateFeatures.type_id]
 }
+
+Table estate_appliances {
+  mls_id varchar [pk, ref: > estate.mls_id]
+  appliances int [ref: < applianceType.type_id]
+}
+
+Table estate_points_of_interest {
+  mls_id varchar [pk, ref: > estate.mls_id]
+  poi int [ref: < pointsOfInterest.type_id]
+}
+
+Table building_features {
+  mls_id varchar [pk, ref: > estate.mls_id]
+  features_building int [ref: < buildingFeatures.type_id]
+}
+
+
+
+
+
+// AD TABLES
 
 
 Table advertisement_sell {
   ad_id int [pk, increment]
-  mls_id varchar [ref: < estate.mls_id]
+  mls_id varchar [ref: - estate.mls_id]
   ad_title varchar
   ad_owner int [not null, ref: - users.user_id]
-  ad_type int [not null, ref: < adType.type_id]
   created_at timestamp
   
   price int 
-  highest_bid int [ref: - bids.bid_id]
+  highest_bid int [ref: < bids_sell.bid_id]
   
   last_change datetime
+  
+  discount_amount decimal
+  discount_timeout datetime
   
   saves int 
   visits int
@@ -202,17 +314,16 @@ Table advertisement_sell {
 
 Table advertisement_rent {
   ad_id int [pk, increment]
-  mls_id varchar [ref: < estate.mls_id]
+  mls_id varchar [ref: - estate.mls_id]
   ad_title varchar
   ad_owner int [not null, ref: - users.user_id]
-  ad_type int [not null, ref: < adType.type_id]
   created_at timestamp
   
   price int 
-  highest_bid int [ref: - bids.bid_id]
+  highest_bid int [ref: < bids_rent.bid_id]
   
   last_change datetime
-  
+  availability boolean  
   booked_untill datetime
   
   saves int 
@@ -223,10 +334,3 @@ Table advertisement_rent {
 
 
 
-
-
-
-
-
-
-  

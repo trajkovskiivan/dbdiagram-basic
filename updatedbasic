@@ -49,6 +49,14 @@ Table company_users {
   linkedin varchar
 }
 
+// this will connect if there are agents on the app
+// working for specific compa
+Table company_agents {
+  company_id int [pk, ref: < users.user_id]
+  agent_id int [pk, ref: < users.user_id]
+}
+
+
 Table business_hours {
   user_id int [pk, ref: - users.user_id]
   day int
@@ -132,7 +140,7 @@ Table buildingFeatures {
   type_name varchar [not null]
 }
 
-Table estateFeatures {
+Table estateFeaturesTypes {
   type_id int [pk]
   type_name varchar [not null]
 }
@@ -167,25 +175,17 @@ Table buildingShapes {
   type_name varchar [not null]
 }
 
-
-
-// BID TABLES
-
-Table bids_sell {
-  mls_id varchar [pk]
-  bid_id int [increment]
-  estate int [ref: - advertisement_sell.ad_id]
-  user int [ref: - users.user_id]
-  bid_amount decimal
+Table advertisementTypes {
+  type_id int [pk]
+  type_name varchar [not null]
+}
+Table bidTypes {
+  type_id int [pk]
+  type_name varchar [not null]
 }
 
-Table bids_rent {
-  mls_id varchar [pk]
-  bid_id int [increment]
-  estate int [ref: - advertisement_sell.ad_id]
-  user int [ref: - users.user_id]
-  bid_amount decimal
-}
+
+
 
 
 
@@ -252,7 +252,7 @@ Table estate_tertiary_data {
 
 Table user__photo {
   photo_id int [pk, increment]
-  user_id int
+  user_id int [ref: < users.user_id]
   link varchar
   // how to keep the data ?
 }
@@ -268,7 +268,7 @@ Table estate_listing_photo {
 
 Table estate_features {
   mls_id varchar [pk, ref: > estate.mls_id]
-  features_estate int [ref: < estateFeatures.type_id]
+  features_estate int [ref: < estateFeaturesTypes.type_id]
 }
 
 Table estate_appliances {
@@ -292,43 +292,96 @@ Table building_features {
 
 // AD TABLES
 
-
-Table advertisement_sell {
+Table advertisements {
   ad_id int [pk, increment]
+  advertisement_type int [ref: < advertisementTypes.type_id]
   mls_id varchar [ref: - estate.mls_id]
   ad_title varchar
   ad_owner int [not null, ref: - users.user_id]
   created_at timestamp
-  
   price int 
-  highest_bid int [ref: < bids_sell.bid_id]
   
-  last_change datetime
+  starting_bid int
+  highest_bid int [ref: < bids_highest.bid_id]
   
   discount_amount decimal
   discount_timeout datetime
   
+  last_change datetime
+  
   saves int 
   visits int
 }
 
+
+Table advertisement_sell {
+  ad_id int [pk, increment]
+  availability boolean  
+}
+
 Table advertisement_rent {
   ad_id int [pk, increment]
-  mls_id varchar [ref: - estate.mls_id]
-  ad_title varchar
-  ad_owner int [not null, ref: - users.user_id]
-  created_at timestamp
-  
-  price int 
-  highest_bid int [ref: < bids_rent.bid_id]
-  
-  last_change datetime
+
   availability boolean  
   booked_untill datetime
-  
-  saves int 
-  visits int
 }
+
+Table events {
+  ad_id int [pk, ref: < advertisements.ad_id]
+  event_type int
+  event_description varchar
+  mls_id int [ref: < estate.mls_id]
+  event_host int [ref: < users.user_id]
+  event_date datetime
+}
+
+
+// BID TABLES
+
+Table bids_highest {
+  mls_id varchar [pk]
+  bid_id int [increment]
+  bid_type int [ref: < bidTypes.type_id]
+  advertisement int [ref: - advertisements.ad_id]
+  user int [ref: - users.user_id]
+  highest_bid_amount int
+}
+
+Table bids_history {
+  mls_id varchar [pk]
+  bid_id int [increment]
+  bid_type int [ref: < bidTypes.type_id]
+  user int [ref: - users.user_id]
+  bid_amount int
+  bid_datetime timestamp
+}
+
+
+Table offers {
+  offer_id int [pk, increment]    
+  mls_id varchar [ref: < estate.mls_id]
+  user_id int [ref: < users.user_id]
+  ad_id int [ref: < advertisements.ad_id]
+  offer_amount int
+}
+
+
+
+
+// Chat
+
+Table chats {
+  chat_id varchar [pk]
+  message_id varchar
+  sender_id int [ref: < users.user_id]
+  receiver_id int [ref: < users.user_id]
+  message text
+  created_at timestamp
+}
+
+
+
+
 
 
 

@@ -7,6 +7,11 @@ Table users {
   status int [not null, ref: < userStatusType.type_id]
 }
 
+Table passord {
+  user_id int [pk, ref: < users.user_id]
+  password varchar
+}
+
 Table users_main_data {
   user_id int [pk, ref: < users.user_id]
   address varchar
